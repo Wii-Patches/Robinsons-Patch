@@ -29,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Excite-Patcher',
+    name='Robinsons-Patcher',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -48,11 +48,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Excite-Patcher',
+    name='Robinsons-Patcher',
 )
 app = BUNDLE(
     coll,
-    name='Excite-Patcher.app',
+    name='Robinsons-Patcher.app',
     icon=ICON,
-    bundle_identifier='net.quatric.excite-patcher',
+    bundle_identifier='net.quatric.robinsons-patcher',
 )
