@@ -13,7 +13,7 @@ def mask_word(w):
         return w & 0xFFE00000                       # lis: ignore the immediate
     if op in (14, 24):                              # addi / ori: ignore address-sized low halves
         imm = w & 0xFFFF
-        if 0x1000 <= imm < 0xF000 and (w >> 16) & 31 != 1:
+        if (0x1000 <= imm < 0xF000 or imm >= 0xE000) and (w >> 16) & 31 != 1:
             return w & 0xFFFF0000
     if 32 <= op <= 55 and (w >> 16) & 31 in (2, 13):
         return w & 0xFFFF0000                       # small-data-area relative load/store
