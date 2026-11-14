@@ -55,7 +55,7 @@ The codes keep their helper routines in low memory (0x80001820–0x80003000), so
 ## Testing status
 
 Tested in **Dolphin only**, with scripted inputs against all three releases (menus, navigation and gameplay on USA; boot and menu navigation on both European releases).
-The target-switch flick is checked in Dolphin up to the game's own controller object (it reads the flick vector the game tests), but switching between two real targets has not been watched on screen.
+The target-switch flick was tested in Dolphin on the frog stage in the Robinson house: left and right pushes move the lock to the next target on that side. Up and down flicks have not been seen switching a target yet.
 **Nothing has been tested on a real Wii.** The Classic Controller path and a GameCube pad used alongside a real Wii Remote are written but not yet exercised.
 Reports from real hardware are welcome.
 

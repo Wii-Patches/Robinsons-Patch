@@ -460,13 +460,14 @@ void pad_post(u8 *k, u32 chan)
         return;
 
     /* The Nunchuk here is ours, so is its accelerometer: still, unless a flick
-     * is being reported.  The game reads -x as right and -y as up. */
+     * is being reported.  In game, +x switches to the target on the right
+     * (checked on the frog stage); -y is taken as up (not observed). */
     for (i = 0; i < 5; i++)
         acc[i] = 0;
     n = ST->fl_n[chan];
     if (n) {
         if (ST->fl_dx[chan])
-            acc[0] = ST->fl_dx[chan] > 0 ? (F_TWO | 0x80000000u) : F_TWO;
+            acc[0] = ST->fl_dx[chan] > 0 ? F_TWO : (F_TWO | 0x80000000u);
         if (ST->fl_dy[chan])
             acc[1] = ST->fl_dy[chan] > 0 ? (F_TWO | 0x80000000u) : F_TWO;
         acc[3] = F_TWO;
