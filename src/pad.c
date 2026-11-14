@@ -81,6 +81,9 @@ struct st {
     u8 pad_[4];
     u32 prev[4];            /* previous frame's Wii Remote word */
     s32 px[4], py[4];       /* pointer position, 1.0 = 0x10000 */
+    u8 fl_n[4];             /* frames of Nunchuk flick left to report */
+    s8 fl_dx[4], fl_dy[4];  /* its direction: +1 right / up */
+    u8 fl_arm[4];           /* the stick has been back in the middle since the last flick */
 };
 #define ST ((volatile struct st *)STATE)
 
@@ -321,6 +324,26 @@ static __attribute__((noinline)) void point(u32 chan, const struct pin *p)
 {
     s32 dx = p->rx, dy = p->ry;
     s32 tx, ty;
+    s32 ax = dx < 0 ? -dx : dx, ay = dy < 0 ? -dy : dy;
+
+    /* Targeting Mode switches targets by flicking the Nunchuk towards the new
+     * one.  With the lock (L / ZL) held, a hard push of the C-stick is that
+     * flick: one short pulse per push, the stick has to come back first.
+     * The pointer stays where it was meanwhile, so the camera does not swing
+     * and the lock keeps what the pointer was on. */
+    if (ax < 30 && ay < 30)
+        ST->fl_arm[chan] = 1;
+    if (ST->fl_n[chan])
+        ST->fl_n[chan]--;
+    if (p->b & (P_L | P_ZL)) {
+        if (ST->fl_arm[chan] && (ax >= 80 || ay >= 80)) {
+            ST->fl_arm[chan] = 0;
+            ST->fl_n[chan] = 3;
+            ST->fl_dx[chan] = ax >= ay ? (dx > 0 ? 1 : -1) : 0;
+            ST->fl_dy[chan] = ax >= ay ? 0 : (dy > 0 ? 1 : -1);
+        }
+        return;
+    }
 
     if (dx > -10 && dx < 10) dx = 0;               /* dead zone */
     if (dy > -10 && dy < 10) dy = 0;
@@ -425,10 +448,32 @@ static __attribute__((noinline)) u32 fx2f(s32 v)
     return sign | ((u32)(127 + e - 16) << 23) | (m & 0x7FFFFFu);
 }
 
-/* KPADiRead, once per sample: make the Wii Remote point where the C-stick says */
+#define F_TWO 0x40000000u                           /* 2.0f: past the game's 1.25 g flick threshold */
+
+/* KPADiRead, once per sample: the Nunchuk's motion, and the Wii Remote pointer */
 void pad_post(u8 *k, u32 chan)
 {
-    if (chan > 3 || !ST->src[chan] || k[0x5E])      /* a real pointer, if there is one, wins */
+    u32 *acc = (u32 *)(k + 0x68);                   /* Nunchuk acc x, y, z, then |acc| and its speed */
+    u32 i, n;
+
+    if (chan > 3 || !ST->src[chan])
+        return;
+
+    /* The Nunchuk here is ours, so is its accelerometer: still, unless a flick
+     * is being reported.  The game reads -x as right and -y as up. */
+    for (i = 0; i < 5; i++)
+        acc[i] = 0;
+    n = ST->fl_n[chan];
+    if (n) {
+        if (ST->fl_dx[chan])
+            acc[0] = ST->fl_dx[chan] > 0 ? (F_TWO | 0x80000000u) : F_TWO;
+        if (ST->fl_dy[chan])
+            acc[1] = ST->fl_dy[chan] > 0 ? (F_TWO | 0x80000000u) : F_TWO;
+        acc[3] = F_TWO;
+        acc[4] = F_TWO;
+    }
+
+    if (k[0x5E])                                    /* a real pointer, if there is one, wins */
         return;
     *(u32 *)(k + 0x20) = fx2f(ST->px[chan]);
     *(u32 *)(k + 0x24) = fx2f(ST->py[chan]);
