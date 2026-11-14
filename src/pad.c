@@ -298,7 +298,8 @@ static __attribute__((noinline)) void from_cc(struct pin *p, const u8 *s)
     p->ry = ccs(*(const s16 *)(s + 0x32));
 }
 
-/* make `s` a Nunchuk sample carrying `p`; `keep` ORs in the Wii Remote's own buttons */
+/* make `s` a Nunchuk sample carrying `p`.  keep: 0 = a fresh sample;
+ * 1 = keep the Wii Remote's buttons and pointer; 2 = keep its buttons only */
 static __attribute__((noinline)) void put_nunchuk(u8 *s, const struct pin *p, u32 wbtn, int keep)
 {
     u32 i;
@@ -307,14 +308,14 @@ static __attribute__((noinline)) void put_nunchuk(u8 *s, const struct pin *p, u3
         for (i = 0; i < 0x38 / 4; i++)
             ((u32 *)s)[i] = 0;
     else
-        for (i = 0x28 / 4; i < 0x38 / 4; i++)      /* the extension part only */
+        for (i = (keep == 2 ? 8 : 0x28) / 4; i < 0x38 / 4; i++)   /* extension (and pointer) part */
             ((u32 *)s)[i] = 0;
     *(u16 *)s = (u16)((keep ? *(u16 *)s : 0) | wbtn);
     s[0x28] = 1;                                   /* extension: Nunchuk */
     s[0x29] = 0;                                   /* no extension error */
     s[0x30] = (u8)(s8)p->lx;                       /* stick, signed around the centre */
     s[0x31] = (u8)(s8)p->ly;
-    s[0x36] = 5;                                   /* nunchuk + accelerometer + pointer data */
+    s[0x36] = keep == 2 ? 4 : 5;                   /* nunchuk + accelerometer (+ pointer data) */
 }
 
 /* The game turns the camera by how far the pointer is from the middle of the
@@ -375,7 +376,9 @@ void pad_sample(u8 *k, u32 chan)
             wb = to_wii(p.b);
             if (i == 0)
                 point(chan, &p);
-            put_nunchuk(s, &p, wb, 1);
+            /* the remote lies somewhere, perhaps facing the sensor bar: its
+             * pointer is dropped so the right stick steers the camera */
+            put_nunchuk(s, &p, wb, 2);
             src = 2;
         }
     }
@@ -474,7 +477,10 @@ void pad_post(u8 *k, u32 chan)
         acc[4] = F_TWO;
     }
 
-    if (k[0x5E])                                    /* a real pointer, if there is one, wins */
+    /* A real pointer wins next to a GameCube pad (the remote may be in hand).
+     * With a Classic Controller the remote is put down, often still facing
+     * the sensor bar, so the right stick always drives the pointer. */
+    if (k[0x5E] && ST->src[chan] != 2)
         return;
     *(u32 *)(k + 0x20) = fx2f(ST->px[chan]);
     *(u32 *)(k + 0x24) = fx2f(ST->py[chan]);

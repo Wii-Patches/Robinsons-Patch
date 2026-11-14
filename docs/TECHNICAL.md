@@ -15,7 +15,7 @@ and four call sites in the input library branch into them:
 | `pad_post`   | Fills the pointer fields from the C-stick, and the Nunchuk accelerometer (still, or a flick). |
 | `pad_probe`  | Makes `WPADProbe` report a Nunchuk so the game accepts the device. |
 
-Synthetic samples use extension type 1 (Nunchuk), format 5. State (previous Wii button bits and so on) lives in zeroed padding at 0x80005D40.
+Synthetic samples use extension type 1 (Nunchuk), format 5 (with pointer data). A Classic Controller sample is rewritten as format 4 with the Wii Remote's pointer fields cleared, and `pad_post` writes the right-stick pointer even when the remote reports one (KPADStatus `+0x5E`); next to a GameCube pad a valid remote pointer still wins. State (previous Wii button bits and so on) lives in zeroed padding at 0x80005D40.
 
 The pointer is absolute and recentres, because the camera follows the pointer position rather than its velocity.
 

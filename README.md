@@ -34,6 +34,7 @@ Follows the game's own Wii controls, remapped to the pad:
 | Hold L / ZL, flick C-stick / right stick | Nunchuk flick (switch target) |
 
 The C-stick is an absolute pointer that springs back to the centre, because the game's camera follows the pointer.
+Next to a GameCube pad, a real Wii Remote's pointer takes over whenever it sees the sensor bar. With a Classic Controller the right stick always drives the pointer, since the remote is usually lying somewhere still facing the bar.
 While the target lock is held, the pointer stays put and a hard push of the C-stick flicks to the next target in that direction, like flicking the Nunchuk.
 
 ## Installing
@@ -56,7 +57,8 @@ The codes keep their helper routines in low memory (0x80001820–0x80003000), so
 
 Tested in **Dolphin only**, with scripted inputs against all three releases (menus, navigation and gameplay on USA; boot and menu navigation on both European releases).
 The target-switch flick was tested in Dolphin on the frog stage in the Robinson house: left and right pushes move the lock to the next target on that side. Up and down flicks have not been seen switching a target yet.
-**Nothing has been tested on a real Wii.** The Classic Controller path and a GameCube pad used alongside a real Wii Remote are written but not yet exercised.
+The Classic Controller (menus, walking, camera, lock and left/right flicks) and a GameCube pad alongside a connected Wii Remote (menus, pause, walking) were tested in Dolphin on USA with emulated controllers.
+**Nothing has been tested on a real Wii.**
 Reports from real hardware are welcome.
 
 ## Building from source
